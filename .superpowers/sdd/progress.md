@@ -108,6 +108,6 @@ Pass only if **all three**:
 - Draft PR #4 (or compare): https://github.com/andrepmoreno/moonlight-android/compare/master...cursor/audio-power-saving-bc11
   (`gh pr create` / ManagePullRequest unavailable here — 403; open draft via Cursor UI)
 - Do **not** merge/update draft PR #1 or #2 for this hypothesis; PR #3 stays as prior step
-- Tip + tag `alpha` → `07f9f2cb6a2b76d76248618b67a762f45491c703`
+- Tip + tag `alpha` → `6529917b64106dc3b314b0aaa95ae4ddac16a520`
 - Alpha download: https://github.com/andrepmoreno/moonlight-android/raw/alpha/releases/app-nonRoot-debug-alpha.apk
 - Artifact: `/opt/cursor/artifacts/app-nonRoot-debug-power-saving.apk`
