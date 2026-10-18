@@ -20,9 +20,6 @@ public class AndroidAudioRenderer implements AudioRenderer {
 
     private AudioTrack track;
 
-    // Rate-limit short-write logs to at most one line per second.
-    private long lastShortWriteLogMs;
-
     public AndroidAudioRenderer(Context context, boolean enableAudioFx) {
         this.context = context;
         this.enableAudioFx = enableAudioFx;
@@ -190,29 +187,22 @@ public class AndroidAudioRenderer implements AudioRenderer {
 
     @Override
     public void playDecodedAudio(short[] audioData) {
-        // Always attempt a non-blocking write so the decoder can drain the native
-        // packet queue. Blocking write + a pending>=40 early drop left Redmi Pad 2
-        // permanently above the gate (queue overflow / +30 sequence jumps).
-        // WRITE_NON_BLOCKING requires API 23; fall back to blocking write below that.
-        int written;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            written = track.write(audioData, 0, audioData.length, AudioTrack.WRITE_NON_BLOCKING);
-        }
-        else {
-            written = track.write(audioData, 0, audioData.length);
-        }
-
-        if (written == audioData.length) {
-            return;
-        }
-
-        // Partial write (> 0): do not loop; discard the rest of this frame.
-        // Zero or negative: discard the whole frame.
-        long now = System.currentTimeMillis();
-        if (now - lastShortWriteLogMs >= 1000) {
-            lastShortWriteLogMs = now;
-            LimeLog.info("Audio write short: wrote " + written + " of " + audioData.length +
-                    ", pending " + MoonBridge.getPendingAudioDuration() + " ms");
+        // Drain the frame with non-blocking writes so a short first write does not
+        // discard the rest (previous single-shot WRITE_NON_BLOCKING left native
+        // queue undrained → overflows / crackle). WRITE_NON_BLOCKING needs API 23.
+        int offset = 0;
+        while (offset < audioData.length) {
+            int wrote;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                wrote = track.write(audioData, offset, audioData.length - offset, AudioTrack.WRITE_NON_BLOCKING);
+            }
+            else {
+                wrote = track.write(audioData, offset, audioData.length - offset);
+            }
+            if (wrote <= 0) {
+                break;
+            }
+            offset += wrote;
         }
     }
 
