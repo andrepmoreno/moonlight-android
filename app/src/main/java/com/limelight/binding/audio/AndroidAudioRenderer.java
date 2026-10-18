@@ -158,10 +158,6 @@ public class AndroidAudioRenderer implements AudioRenderer {
                 continue;
             }
 
-            if (bufferSize < 8192) {
-                bufferSize = 8192;
-            }
-
             try {
                 track = createAudioTrack(channelConfig, sampleRate, bufferSize, lowLatency);
                 track.play();
