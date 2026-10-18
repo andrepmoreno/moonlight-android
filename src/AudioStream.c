@@ -151,8 +151,11 @@ static bool queuePacketToLbq(PQUEUED_AUDIO_PACKET* packet) {
         else if (err == LBQ_BOUND_EXCEEDED) {
             Limelog("Audio packet queue overflow\n");
 
-            // The audio queue is full, so free all existing items and try again
-            freePacketList(LbqFlushQueueItems(&packetQueue));
+            // Drop the new packet; leave existing queue items in place to avoid
+            // a ~150ms decode jump (+29/+30) from flushing the whole queue.
+            free(*packet);
+            *packet = NULL;
+            return true;
         }
     } while (err == LBQ_BOUND_EXCEEDED);
 
