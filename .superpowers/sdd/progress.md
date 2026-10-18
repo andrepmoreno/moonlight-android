@@ -74,6 +74,7 @@ Pass only if:
 ## Commits
 - `test: force min AudioTrack buffer to check Pad drain` on `cursor/force-min-audio-buffer-bc11` (hypothesis dead; do not merge)
 - `fix: use non-blocking AudioTrack write to avoid decode backlog` on `cursor/audio-nonblocking-write-bc11` (`ddb3b236`) — FAILED on Pad
-- `fix: drain AudioTrack with non-blocking write loop` on `cursor/audio-nonblocking-write-bc11` (this iteration)
-- Draft PR #1: https://github.com/andrepmoreno/moonlight-android/pull/1
+- `fix: drain AudioTrack with non-blocking write loop` on `cursor/audio-nonblocking-write-bc11` (`be0eab83`)
+- Draft PR #1: https://github.com/andrepmoreno/moonlight-android/pull/1 (head updated via push; ManagePullRequest unavailable in this session — body still describes single-shot write)
 - Alpha download: https://github.com/andrepmoreno/moonlight-android/raw/alpha/releases/app-nonRoot-debug-alpha.apk
+- Artifact: `/opt/cursor/artifacts/app-nonRoot-debug-nonblocking-loop.apk`
