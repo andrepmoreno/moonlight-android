@@ -128,9 +128,7 @@ public class AndroidAudioRenderer implements AudioRenderer {
             switch (i) {
                 case 0:
                 case 2:
-                    bufferSize = bytesPerFrame * 2;
-                    break;
-
+                    // shortcut: forces the min buffer on every device, revert before PR
                 case 1:
                 case 3:
                     // Try the larger buffer size
