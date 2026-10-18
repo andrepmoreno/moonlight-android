@@ -99,5 +99,6 @@ Pass only if **all three**:
 - Compare / open draft PR: https://github.com/andrepmoreno/moonlight-android/compare/master...cursor/audio-playback-thread-bc11
   (`gh pr create` / ManagePullRequest unavailable here — 403)
 - Do **not** merge/update draft PR #1 (non-blocking write) or #2 (USAGE_MEDIA) for this hypothesis
+- Tip + tag `alpha` → `4697339850ad474022014bb3c73de1d54e677208`
 - Alpha download: https://github.com/andrepmoreno/moonlight-android/raw/alpha/releases/app-nonRoot-debug-alpha.apk
 - Artifact: `/opt/cursor/artifacts/app-nonRoot-debug-playback-thread.apk`
