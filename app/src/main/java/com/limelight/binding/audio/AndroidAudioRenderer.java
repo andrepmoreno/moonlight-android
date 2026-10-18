@@ -27,7 +27,7 @@ public class AndroidAudioRenderer implements AudioRenderer {
 
     private AudioTrack createAudioTrack(int channelConfig, int sampleRate, int bufferSize, boolean lowLatency) {
         AudioAttributes.Builder attributesBuilder = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME);
+                .setUsage(AudioAttributes.USAGE_MEDIA);
         AudioFormat format = new AudioFormat.Builder()
                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                 .setSampleRate(sampleRate)
