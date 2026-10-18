@@ -1,5 +1,9 @@
 #include "Limelight-internal.h"
 
+#ifdef __ANDROID__
+#include <sys/resource.h>
+#endif
+
 static SOCKET rtpSocket = INVALID_SOCKET;
 
 static LINKED_BLOCKING_QUEUE packetQueue;
@@ -388,6 +392,10 @@ static void AudioReceiveThreadProc(void* context) {
 static void AudioDecoderThreadProc(void* context) {
     int err;
     PQUEUED_AUDIO_PACKET packet;
+
+#ifdef __ANDROID__
+    setpriority(PRIO_PROCESS, 0, -19);
+#endif
 
     while (!PltIsThreadInterrupted(&decoderThread)) {
         err = LbqWaitForQueueElement(&packetQueue, (void**)&packet);
