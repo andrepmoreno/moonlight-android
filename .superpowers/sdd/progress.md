@@ -85,8 +85,8 @@ Pass only if **all three**:
 - `fix: use non-blocking AudioTrack write to avoid decode backlog` on `cursor/audio-nonblocking-write-bc11` — FAILED on Pad
 - `fix: drain AudioTrack with non-blocking write loop` on `cursor/audio-nonblocking-write-bc11` — FAILED (underrun flood ~12:53)
 - `fix: use USAGE_MEDIA for AudioTrack attributes` on `cursor/audio-usage-media-bc11` (`3a00617d`, from clean v12.2)
-- `release: publish USAGE_MEDIA APK as alpha` (`a7d4aacd`); tag `alpha` → `a7d4aacd`
-- Draft PR: **needs create** for `cursor/audio-usage-media-bc11` → `master` (ManagePullRequest unavailable here; `gh pr create` denied). Open: https://github.com/andrepmoreno/moonlight-android/compare/master...cursor/audio-usage-media-bc11?quick_pull=1&draft=true
+- `release: publish USAGE_MEDIA APK as alpha` (`a7d4aacd`); tip + tag `alpha` → `c00aa061`
+- Draft PR: **needs create** for `cursor/audio-usage-media-bc11` → `master` (ManagePullRequest unavailable here; `gh pr create` denied). Compare: https://github.com/andrepmoreno/moonlight-android/compare/master...cursor/audio-usage-media-bc11
 - Do **not** merge/update draft PR #1 (non-blocking write) for this hypothesis
 - Alpha download: https://github.com/andrepmoreno/moonlight-android/raw/alpha/releases/app-nonRoot-debug-alpha.apk
 - Artifact: `/opt/cursor/artifacts/app-nonRoot-debug-usage-media.apk`
