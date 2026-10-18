@@ -59,10 +59,8 @@ public class AndroidAudioRenderer implements AudioRenderer {
                     .setTransferMode(AudioTrack.MODE_STREAM)
                     .setBufferSizeInBytes(bufferSize);
 
-            // Use PERFORMANCE_MODE_LOW_LATENCY on O and later
-            if (lowLatency) {
-                trackBuilder.setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY);
-            }
+            // Request deep buffer / POWER_SAVING path on O and later (not low-latency mixer)
+            trackBuilder.setPerformanceMode(AudioTrack.PERFORMANCE_MODE_POWER_SAVING);
 
             return trackBuilder.build();
         }
