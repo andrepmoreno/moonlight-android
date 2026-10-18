@@ -20,6 +20,17 @@ public class AndroidAudioRenderer implements AudioRenderer {
 
     private AudioTrack track;
 
+    // Decoded PCM ring: decode thread pushes, playback thread pulls + writes.
+    private short[] ring;
+    private short[] scratch;
+    private int ringWritePos;
+    private int ringReadPos;
+    private int ringCount;
+    private final Object ringLock = new Object();
+
+    private Thread playbackThread;
+    private volatile boolean playbackRunning;
+
     public AndroidAudioRenderer(Context context, boolean enableAudioFx) {
         this.context = context;
         this.enableAudioFx = enableAudioFx;
@@ -182,20 +193,72 @@ public class AndroidAudioRenderer implements AudioRenderer {
             return -2;
         }
 
+        // 1 second of PCM shorts; scratch holds one decoded frame for blocking writes.
+        ring = new short[sampleRate * audioConfiguration.channelCount];
+        scratch = new short[samplesPerFrame * audioConfiguration.channelCount];
+        synchronized (ringLock) {
+            ringWritePos = 0;
+            ringReadPos = 0;
+            ringCount = 0;
+        }
+
         return 0;
     }
 
     @Override
     public void playDecodedAudio(short[] audioData) {
-        // Only queue up to 40 ms of pending audio data in addition to what AudioTrack is buffering for us.
-        if (MoonBridge.getPendingAudioDuration() < 40) {
-            // This will block until the write is completed. That can cause a backlog
-            // of pending audio data, so we do the above check to be able to bound
-            // latency at 40 ms in that situation.
-            track.write(audioData, 0, audioData.length);
+        // Never block the decode thread: copy into the ring or discard.
+        synchronized (ringLock) {
+            if (ring == null || audioData.length > ring.length - ringCount) {
+                return;
+            }
+
+            int length = audioData.length;
+            int first = Math.min(length, ring.length - ringWritePos);
+            System.arraycopy(audioData, 0, ring, ringWritePos, first);
+            if (first < length) {
+                System.arraycopy(audioData, first, ring, 0, length - first);
+            }
+            ringWritePos = (ringWritePos + length) % ring.length;
+            ringCount += length;
+            ringLock.notifyAll();
         }
-        else {
-            LimeLog.info("Too much pending audio data: " + MoonBridge.getPendingAudioDuration() +" ms");
+    }
+
+    private void playbackLoop() {
+        while (playbackRunning) {
+            int n;
+
+            synchronized (ringLock) {
+                while (playbackRunning && ringCount == 0) {
+                    try {
+                        ringLock.wait();
+                    } catch (InterruptedException e) {
+                        // Re-check playbackRunning
+                        break;
+                    }
+                }
+
+                if (!playbackRunning || ring == null || scratch == null) {
+                    break;
+                }
+
+                n = Math.min(scratch.length, ringCount);
+                if (n <= 0) {
+                    continue;
+                }
+
+                int first = Math.min(n, ring.length - ringReadPos);
+                System.arraycopy(ring, ringReadPos, scratch, 0, first);
+                if (first < n) {
+                    System.arraycopy(ring, 0, scratch, first, n - first);
+                }
+                ringReadPos = (ringReadPos + n) % ring.length;
+                ringCount -= n;
+            }
+
+            // Blocking write stays off the decode thread so the native queue can drain.
+            track.write(scratch, 0, n);
         }
     }
 
@@ -209,6 +272,15 @@ public class AndroidAudioRenderer implements AudioRenderer {
             i.putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_GAME);
             context.sendBroadcast(i);
         }
+
+        playbackRunning = true;
+        playbackThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                playbackLoop();
+            }
+        }, "MoonlightAudioPlayback");
+        playbackThread.start();
     }
 
     @Override
@@ -224,6 +296,31 @@ public class AndroidAudioRenderer implements AudioRenderer {
 
     @Override
     public void cleanup() {
+        // Stop the playback thread before touching the track.
+        playbackRunning = false;
+        synchronized (ringLock) {
+            ringLock.notifyAll();
+        }
+
+        boolean joined = true;
+        if (playbackThread != null) {
+            playbackThread.interrupt();
+            try {
+                playbackThread.join(2000);
+            } catch (InterruptedException e) {
+                joined = false;
+            }
+            if (playbackThread.isAlive()) {
+                LimeLog.severe("Audio playback thread did not stop; skipping track release");
+                joined = false;
+            }
+            playbackThread = null;
+        }
+
+        if (!joined) {
+            return;
+        }
+
         // Immediately drop all pending data
         track.pause();
         track.flush();
