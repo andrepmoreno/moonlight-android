@@ -70,7 +70,10 @@ static void AudioPingThreadProc(void* context) {
 
 // Initialize the audio stream and start
 int initializeAudioStream(void) {
-    LbqInitializeLinkedBlockingQueue(&packetQueue, 30);
+    // Bound 60 (~600ms at 10ms Opus frames): absorb short decode lag bursts on
+    // Pad after Java ring removed AudioTrack.write from AudioDec. Drop-on-bound
+    // (drop newest, no flush) stays — latency tradeoff vs bound 30 when saturated.
+    LbqInitializeLinkedBlockingQueue(&packetQueue, 60);
     RtpaInitializeQueue(&rtpAudioQueue);
     lastSeq = 0;
     receivedDataFromPeer = false;
