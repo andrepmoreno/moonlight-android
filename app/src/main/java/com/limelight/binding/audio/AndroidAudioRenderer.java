@@ -128,7 +128,19 @@ public class AndroidAudioRenderer implements AudioRenderer {
             switch (i) {
                 case 0:
                 case 2:
-                    bufferSize = bytesPerFrame * 2;
+                    // With audio FX enabled we skip lowLatency and would otherwise
+                    // settle on the small buffer (bytesPerFrame*2 ≈ 10ms). Mixer
+                    // periods on some devices (~21ms) exceed that and underrun.
+                    // Use the same min-buffer sizing as the large path when FX is on.
+                    if (enableAudioFx) {
+                        bufferSize = Math.max(AudioTrack.getMinBufferSize(sampleRate,
+                                channelConfig,
+                                AudioFormat.ENCODING_PCM_16BIT),
+                                bytesPerFrame * 2);
+                        bufferSize = (((bufferSize + (bytesPerFrame - 1)) / bytesPerFrame) * bytesPerFrame);
+                    } else {
+                        bufferSize = bytesPerFrame * 2;
+                    }
                     break;
 
                 case 1:
